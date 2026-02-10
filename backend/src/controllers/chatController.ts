@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import { callSupportAgent } from '../services/agentService.js';
-import { startNewConversation, saveMessage, loadConversationById } from '../services/conversationService.js';
+import { startNewConversation, saveMessage, loadConversationById, listUserConversations, deleteConversation } from '../services/conversationService.js';
 
 const chat = new Hono();
 
@@ -23,16 +23,37 @@ chat.post('/messages', async (c) => {
   // Save user message
   await saveMessage(convId, 'user', message);
 
-  // Call agent with conversation history
-  const agentResponse = await callSupportAgent(message, userId, conversationHistory);
+  // Call agent with conversation history (returns stream)
+  const streamResult = await callSupportAgent(message, userId, conversationHistory, convId);
 
-  // Save agent response
-  await saveMessage(convId, 'assistant', agentResponse, 'support');
+  // Return streaming response
+  return streamResult.toTextStreamResponse();
+});
 
-  return c.json({
-    conversationId: convId,
-    response: agentResponse
-  });
+// GET /api/chat/conversations - List user conversations
+chat.get('/conversations', async (c) => {
+  const userId = c.get('userId');
+  const conversations = await listUserConversations(userId);
+  return c.json({ conversations });
+});
+
+// GET /api/chat/conversations/:id - Get conversation history
+chat.get('/conversations/:id', async (c) => {
+  const conversationId = c.req.param('id');
+  const conversation = await loadConversationById(conversationId);
+
+  if (!conversation) {
+    return c.json({ error: 'Conversation not found' }, 404);
+  }
+
+  return c.json({ conversation });
+});
+
+// DELETE /api/chat/conversations/:id - Delete conversation
+chat.delete('/conversations/:id', async (c) => {
+  const conversationId = c.req.param('id');
+  await deleteConversation(conversationId);
+  return c.json({ success: true });
 });
 
 export default chat;

@@ -69,3 +69,12 @@ export async function listUserConversations(userId: string) {
 
   return conversations;
 }
+
+// Delete a conversation by ID
+export async function deleteConversation(conversationId: string) {
+  await prisma.conversation.delete({
+    where: {
+      id: conversationId
+    }
+  });
+}

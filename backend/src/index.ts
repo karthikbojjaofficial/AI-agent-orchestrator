@@ -2,7 +2,7 @@ import 'dotenv/config';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { serve } from '@hono/node-server';
-import { callSupportAgent } from './services/agentService.js';
+import { callSupportAgent, callOrderAgent, callBillingAgent } from './services/agentService.js';
 import { extractUserId } from './middleware/userMiddleware.js';
 import { validateUser } from './middleware/validateUser.js';
 import chat from './controllers/chatController.js';
@@ -24,8 +24,22 @@ app.get('/health', (c) => {
 // Test agent endpoint
 app.post('/test-agent', async (c) => {
   const { message, userId } = await c.req.json();
-  const response = await callSupportAgent(message, userId || 'user_1', []);
-  return c.json({ response });
+  const response = await callSupportAgent(message, userId || 'user_1', [], 'test-conv-id');
+  return response.toTextStreamResponse();
+});
+
+// Test order agent endpoint
+app.post('/test-order-agent', async (c) => {
+  const { message, userId } = await c.req.json();
+  const response = await callOrderAgent(message, userId || 'user_1', [], 'test-conv-id');
+  return response.toTextStreamResponse();
+});
+
+// Test billing agent endpoint
+app.post('/test-billing-agent', async (c) => {
+  const { message, userId } = await c.req.json();
+  const response = await callBillingAgent(message, userId || 'user_1', [], 'test-conv-id');
+  return response.toTextStreamResponse();
 });
 
 // Basic error handling
