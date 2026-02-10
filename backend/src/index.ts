@@ -1,6 +1,8 @@
+import 'dotenv/config';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { serve } from '@hono/node-server';
+import { callSupportAgent } from './services/agentService.js';
 
 const app = new Hono();
 
@@ -10,6 +12,13 @@ app.use('*', cors());
 // Health check endpoint
 app.get('/health', (c) => {
   return c.json({ status: 'ok' });
+});
+
+// Test agent endpoint
+app.post('/test-agent', async (c) => {
+  const { message, userId } = await c.req.json();
+  const response = await callSupportAgent(message, userId || 'user_1', []);
+  return c.json({ response });
 });
 
 // Basic error handling
