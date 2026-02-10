@@ -1,8 +1,6 @@
-import { Context, Next } from 'hono';
-
 const VALID_USERS = ['user_1', 'user_2', 'user_3'];
 
-export async function validateUser(c: Context, next: Next) {
+export async function validateUser(c: any, next: any) {
   const userId = c.get('userId');
 
   // Check if userId exists

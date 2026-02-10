@@ -1,0 +1,14 @@
+# Ignore all Markdown files except README.md
+*.md
+!README.md
+!readme.md
+
+# Environment variables
+.env
+
+# Dependencies
+node_modules
+
+# IDE
+.vscode
+.idea

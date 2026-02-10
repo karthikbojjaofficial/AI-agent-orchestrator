@@ -3,11 +3,18 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { serve } from '@hono/node-server';
 import { callSupportAgent } from './services/agentService.js';
+import { extractUserId } from './middleware/userMiddleware.js';
+import { validateUser } from './middleware/validateUser.js';
+import chat from './controllers/chatController.js';
 
 const app = new Hono();
 
 // CORS middleware
 app.use('*', cors());
+
+// API routes with user middleware
+app.use('/api/*', extractUserId, validateUser);
+app.route('/api/chat', chat);
 
 // Health check endpoint
 app.get('/health', (c) => {
