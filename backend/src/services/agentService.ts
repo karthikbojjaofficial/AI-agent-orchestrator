@@ -1,5 +1,5 @@
 import { openai } from '@ai-sdk/openai';
-import { streamText, tool, stepCountIs } from 'ai';
+import { streamText, generateObject, tool, stepCountIs } from 'ai';
 import { z } from 'zod';
 import { queryConversationHistory } from '../tools/conversationTools.js';
 import { getOrderDetails, getDeliveryStatus, modifyOrder } from '../tools/orderTools.js';
@@ -53,6 +53,16 @@ Guidelines:
 - Provide clear payment and refund status information
 - Be empathetic when handling refund requests
 - Keep responses professional and accurate`;
+
+// System prompt for Router Agent
+const ROUTER_AGENT_PROMPT = `You are a routing agent that classifies customer inquiries.
+
+Your task is to analyze the customer's message and determine which specialized agent should handle it:
+- "support" for general questions, FAQs, and conversation history
+- "order" for order tracking, delivery status, and order modifications
+- "billing" for invoices, payments, and refunds
+
+Classify based on the primary intent of the message.`;
 
 export async function callSupportAgent(message: string, userId: string, conversationHistory: any[], conversationId: string) {
   const result = streamText({
@@ -165,7 +175,17 @@ export async function callBillingAgent(message: string, userId: string, conversa
   return result;
 }
 
-export async function callRouterAgent(message: string, conversationHistory: any[]) {
-  // TODO: Implement router logic to decide which agent to call
-  return 'Router agent response';
+export async function callRouterAgent(message: string, userId: string, conversationHistory: any[]) {
+  const result = await generateObject({
+    model: model,
+    system: ROUTER_AGENT_PROMPT,
+    prompt: message,
+    schema: z.object({
+      agentType: z.enum(['support', 'order', 'billing']).describe('The type of agent to route to'),
+      confidence: z.number().min(0).max(1).describe('Confidence level between 0 and 1 for this classification'),
+      reasoning: z.string().describe('Brief explanation of why this agent was chosen')
+    })
+  });
+
+  return result.object;
 }

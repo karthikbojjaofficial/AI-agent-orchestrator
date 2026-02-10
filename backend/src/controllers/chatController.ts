@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import { callSupportAgent } from '../services/agentService.js';
+import { callSupportAgent, callOrderAgent, callBillingAgent, callRouterAgent } from '../services/agentService.js';
 import { startNewConversation, saveMessage, loadConversationById, listUserConversations, deleteConversation } from '../services/conversationService.js';
 
 const chat = new Hono();
@@ -23,8 +23,19 @@ chat.post('/messages', async (c) => {
   // Save user message
   await saveMessage(convId, 'user', message);
 
-  // Call agent with conversation history (returns stream)
-  const streamResult = await callSupportAgent(message, userId, conversationHistory, convId);
+  // Call router to determine which agent to use
+  const routerResult = await callRouterAgent(message, userId, conversationHistory);
+  const { agentType } = routerResult;
+
+  // Call appropriate agent based on router decision
+  let streamResult;
+  if (agentType === 'order') {
+    streamResult = await callOrderAgent(message, userId, conversationHistory, convId);
+  } else if (agentType === 'billing') {
+    streamResult = await callBillingAgent(message, userId, conversationHistory, convId);
+  } else {
+    streamResult = await callSupportAgent(message, userId, conversationHistory, convId);
+  }
 
   // Return streaming response
   return streamResult.toTextStreamResponse();
