@@ -1,0 +1,62 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Conversation {
+  id        String    @id @default(uuid())
+  userId    String
+  title     String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  messages  Message[]
+}
+
+model Message {
+  id             String       @id @default(uuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  role           String
+  content        String       @db.Text
+  agentType      String?
+  createdAt      DateTime     @default(now())
+
+  @@index([conversationId, createdAt])
+}
+
+model Order {
+  id                String    @id @default(uuid())
+  userId            String
+  orderNumber       String    @unique
+  status            String
+  items             Json
+  total             Float
+  trackingNumber    String?
+  estimatedDelivery DateTime?
+  createdAt         DateTime  @default(now())
+
+  @@index([userId, orderNumber])
+}
+
+model Payment {
+  id            String   @id @default(uuid())
+  userId        String
+  orderId       String?
+  invoiceNumber String   @unique
+  amount        Float
+  status        String
+  paymentMethod String
+  refundStatus  String?
+  createdAt     DateTime @default(now())
+
+  @@index([userId, invoiceNumber])
+}

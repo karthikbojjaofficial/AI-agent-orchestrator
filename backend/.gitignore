@@ -1,0 +1,10 @@
+node_modules
+# Keep environment variables out of version control
+.env
+
+/src/generated/prisma
+
+# Ignore all Markdown files except README.md
+*.md
+!README.md
+!readme.md
