@@ -9,6 +9,9 @@
 # Dependencies
 node_modules
 
+# Generated files
+**/generated
+
 # IDE
 .vscode
 .idea
