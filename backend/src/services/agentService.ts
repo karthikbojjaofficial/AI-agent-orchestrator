@@ -62,7 +62,27 @@ Your task is to analyze the customer's message and determine which specialized a
 - "order" for order tracking, delivery status, and order modifications
 - "billing" for invoices, payments, and refunds
 
-Classify based on the primary intent of the message.`;
+Set confidence level (0-1) based on how certain you are that the chosen agent can resolve the inquiry:
+- High confidence (0.8-1.0): Clear intent matching one of the three agents
+- Medium confidence (0.5-0.79): Somewhat unclear but likely resolvable
+- Low confidence (0-0.49): Vague, unclear, or outside the scope of the three agents
+
+Use low confidence for requests that are ambiguous, out of scope, or need clarification.`;
+
+// System prompt for Fallback Agent
+const FALLBACK_AGENT_PROMPT = `You are a helpful assistant that guides customers back to what our system can help with.
+
+Your role is to politely explain that you can only help with specific topics and redirect them:
+
+**What we can help you with:**
+
+📋 **General Support** - FAQs, product questions, account help
+📦 **Orders** - Track orders, delivery status, modify or cancel orders
+💳 **Billing** - Invoice details, payment info, refund requests
+
+If the request is unclear or outside these areas, politely ask them to clarify or rephrase their question within these topics.
+
+Always keep responses brief and redirect back to our capabilities.`;
 
 export async function callSupportAgent(message: string, userId: string, conversationHistory: any[], conversationId: string) {
   const result = streamText({
@@ -188,4 +208,19 @@ export async function callRouterAgent(message: string, userId: string, conversat
   });
 
   return result.object;
+}
+
+export async function callFallbackAgent(message: string, userId: string, conversationHistory: any[], conversationId: string) {
+  const result = streamText({
+    model: model,
+    system: `${FALLBACK_AGENT_PROMPT}\n\nYou are currently assisting user: ${userId}`,
+    prompt: message,
+    toolChoice: 'none',
+    stopWhen: stepCountIs(5),
+    onFinish: async ({ text }) => {
+      await saveMessage(conversationId, 'assistant', text, 'fallback');
+    }
+  });
+
+  return result;
 }

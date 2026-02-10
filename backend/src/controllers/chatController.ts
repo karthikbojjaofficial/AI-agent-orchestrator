@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import { callSupportAgent, callOrderAgent, callBillingAgent, callRouterAgent } from '../services/agentService.js';
+import { callSupportAgent, callOrderAgent, callBillingAgent, callRouterAgent, callFallbackAgent } from '../services/agentService.js';
 import { startNewConversation, saveMessage, loadConversationById, listUserConversations, deleteConversation } from '../services/conversationService.js';
 
 const chat = new Hono();
@@ -25,11 +25,17 @@ chat.post('/messages', async (c) => {
 
   // Call router to determine which agent to use
   const routerResult = await callRouterAgent(message, userId, conversationHistory);
-  const { agentType } = routerResult;
+  const { agentType, confidence } = routerResult;
 
-  // Call appropriate agent based on router decision
+  // Set confidence threshold
+  const CONFIDENCE_THRESHOLD = 0.7;
+
+  // Call appropriate agent based on confidence and router decision
   let streamResult;
-  if (agentType === 'order') {
+  if (confidence < CONFIDENCE_THRESHOLD) {
+    // Low confidence - use fallback agent
+    streamResult = await callFallbackAgent(message, userId, conversationHistory, convId);
+  } else if (agentType === 'order') {
     streamResult = await callOrderAgent(message, userId, conversationHistory, convId);
   } else if (agentType === 'billing') {
     streamResult = await callBillingAgent(message, userId, conversationHistory, convId);
