@@ -7,8 +7,9 @@ import { extractUserId } from './middleware/userMiddleware.js';
 import { validateUser } from './middleware/validateUser.js';
 import { rateLimitMiddleware } from './middleware/rateLimitMiddleware.js';
 import chat from './controllers/chatController.js';
+import type { AppContext } from './types.js';
 
-const app = new Hono();
+const app = new Hono<AppContext>();
 
 // CORS middleware
 app.use('*', cors());

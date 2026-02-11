@@ -1,5 +1,5 @@
 import { openai } from '@ai-sdk/openai';
-import { streamText, generateObject, generateText, tool, stepCountIs } from 'ai';
+import { streamText, generateObject, generateText, tool, stepCountIs, type StreamTextResult } from 'ai';
 import { z } from 'zod';
 import { encoding_for_model } from 'tiktoken';
 import { queryConversationHistory } from '../tools/conversationTools.js';
@@ -141,7 +141,7 @@ If the request is unclear or outside these areas, politely ask them to clarify o
 
 Always keep responses brief and redirect back to our capabilities.`;
 
-export async function callSupportAgent(message: string, userId: string, conversationHistory: any[], conversationId: string) {
+export async function callSupportAgent(message: string, userId: string, conversationHistory: any[], conversationId: string): Promise<StreamTextResult<Record<string, any>>> {
   const historyContext = await formatConversationHistory(conversationHistory);
   const fullPrompt = historyContext + message;
 
@@ -170,7 +170,7 @@ export async function callSupportAgent(message: string, userId: string, conversa
   return result;
 }
 
-export async function callOrderAgent(message: string, userId: string, conversationHistory: any[], conversationId: string) {
+export async function callOrderAgent(message: string, userId: string, conversationHistory: any[], conversationId: string): Promise<StreamTextResult<Record<string, any>>> {
   const historyContext = await formatConversationHistory(conversationHistory);
   const fullPrompt = historyContext + message;
 
@@ -230,7 +230,7 @@ export async function callOrderAgent(message: string, userId: string, conversati
   return result;
 }
 
-export async function callBillingAgent(message: string, userId: string, conversationHistory: any[], conversationId: string) {
+export async function callBillingAgent(message: string, userId: string, conversationHistory: any[], conversationId: string): Promise<StreamTextResult<Record<string, any>>> {
   const historyContext = await formatConversationHistory(conversationHistory);
   const fullPrompt = historyContext + message;
 
@@ -292,7 +292,7 @@ export async function callRouterAgent(message: string, userId: string, conversat
   return result.object;
 }
 
-export async function callFallbackAgent(message: string, userId: string, conversationHistory: any[], conversationId: string) {
+export async function callFallbackAgent(message: string, userId: string, conversationHistory: any[], conversationId: string): Promise<StreamTextResult<Record<string, any>>> {
   const historyContext = await formatConversationHistory(conversationHistory);
   const fullPrompt = historyContext + message;
 

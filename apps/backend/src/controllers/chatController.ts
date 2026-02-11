@@ -1,8 +1,9 @@
 import { Hono } from 'hono';
 import { callSupportAgent, callOrderAgent, callBillingAgent, callRouterAgent, callFallbackAgent } from '../services/agentService.js';
 import { startNewConversation, saveMessage, loadConversationById, listUserConversations, deleteConversation } from '../services/conversationService.js';
+import type { AppContext } from '../types.js';
 
-const chat = new Hono();
+const chat = new Hono<AppContext>();
 
 // POST /api/chat/messages - Send new message
 chat.post('/messages', async (c) => {
