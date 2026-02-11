@@ -72,4 +72,5 @@ serve({
 
 console.log(`Server running on http://localhost:${port}`);
 
+export type AppType = typeof app;
 export default app;
