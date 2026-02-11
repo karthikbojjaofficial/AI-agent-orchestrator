@@ -2,6 +2,13 @@
   "$schema": "https://turbo.build/schema.json",
   "tasks": {
     "dev": {
+      "cache": false
+    },
+    "backend#dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "frontend#dev": {
       "cache": false,
       "persistent": true
     },

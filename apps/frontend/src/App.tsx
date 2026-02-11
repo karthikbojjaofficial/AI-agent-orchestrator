@@ -100,6 +100,7 @@ function App() {
           isStreaming: false,
         }))
 
+        console.log('[loadConversation] Loaded messages:', mappedMessages.length, mappedMessages)
         setMessages(mappedMessages)
         setCurrentConversationId(conversationId)
       }

@@ -3,7 +3,7 @@ import { streamText, generateObject, generateText, tool, stepCountIs } from 'ai'
 import { z } from 'zod';
 import { encoding_for_model } from 'tiktoken';
 import { queryConversationHistory } from '../tools/conversationTools.js';
-import { getOrderDetails, getDeliveryStatus, modifyOrder } from '../tools/orderTools.js';
+import { getOrderDetails, getDeliveryStatus, modifyOrder, listUserOrders } from '../tools/orderTools.js';
 import { getInvoiceDetails, checkRefundStatus } from '../tools/billingTools.js';
 import { saveMessage } from './conversationService.js';
 
@@ -91,7 +91,7 @@ Your role:
 - Answer questions about order details
 
 Guidelines:
-- Always verify order numbers with the customer
+- Use order numbers from the conversation history when available, otherwise ask the customer to provide them
 - Provide clear tracking and delivery information
 - Be helpful when processing order changes
 - Keep responses concise and accurate`;
@@ -106,7 +106,7 @@ Your role:
 - Assist with payment-related concerns
 
 Guidelines:
-- Always verify invoice numbers with the customer
+- Use invoice numbers from the conversation history when available, otherwise ask the customer to provide them
 - Provide clear payment and refund status information
 - Be empathetic when handling refund requests
 - Keep responses professional and accurate`;
@@ -179,6 +179,15 @@ export async function callOrderAgent(message: string, userId: string, conversati
     system: `${ORDER_AGENT_PROMPT}\n\nYou are currently assisting user: ${userId}`,
     prompt: fullPrompt,
     tools: {
+      listUserOrders: tool({
+        description: 'Get a list of all orders for the current user. Use this when the customer asks to see their orders or order history.',
+        inputSchema: z.object({
+          userId: z.string().describe('The ID of the user')
+        }),
+        execute: async ({ userId }) => {
+          return await listUserOrders(userId);
+        }
+      }),
       getOrderDetails: tool({
         description: 'Get detailed information about a specific order. Use this when the customer asks about their order.',
         inputSchema: z.object({

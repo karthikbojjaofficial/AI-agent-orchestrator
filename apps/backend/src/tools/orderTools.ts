@@ -7,6 +7,32 @@ const adapter = new PrismaPg({
 });
 const prisma = new PrismaClient({ adapter });
 
+// Tool to list all orders for a user
+export async function listUserOrders(userId: string) {
+  const orders = await prisma.order.findMany({
+    where: {
+      userId: userId
+    },
+    orderBy: {
+      createdAt: 'desc'
+    }
+  });
+
+  if (orders.length === 0) {
+    return { message: 'No orders found for this user' };
+  }
+
+  return {
+    orders: orders.map(order => ({
+      orderNumber: order.orderNumber,
+      status: order.status,
+      items: order.items,
+      total: order.total,
+      createdAt: order.createdAt
+    }))
+  };
+}
+
 // Tool to get order details
 export async function getOrderDetails(orderNumber: string, userId: string) {
   const order = await prisma.order.findFirst({
