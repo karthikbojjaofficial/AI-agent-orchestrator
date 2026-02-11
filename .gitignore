@@ -12,6 +12,9 @@ node_modules
 # Generated files
 **/generated
 
+# Turborepo
+.turbo
+
 # IDE
 .vscode
 .idea

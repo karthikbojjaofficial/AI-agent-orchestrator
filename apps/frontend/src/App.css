@@ -1,42 +1,237 @@
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
+/* CSS Variables */
+:root {
+  --primary-color: #4f46e5;
+  --primary-hover: #4338ca;
+  --secondary-color: #6b7280;
+  --background: #ffffff;
+  --surface: #f9fafb;
+  --border: #e5e7eb;
+  --text-primary: #111827;
+  --text-secondary: #6b7280;
+  --user-message-bg: #4f46e5;
+  --user-message-text: #ffffff;
+  --assistant-message-bg: #f3f4f6;
+  --assistant-message-text: #111827;
+  --error: #ef4444;
+  --success: #10b981;
+}
+
+/* Reset and Base Styles */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--surface);
+  color: var(--text-primary);
+}
+
+/* Main App Container */
+.app {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--background);
+  overflow: hidden;
+}
+
+/* Header */
+.app-header {
+  background-color: var(--primary-color);
+  color: white;
+  padding: 1.5rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 2px solid var(--primary-hover);
+}
+
+.app-header h1 {
+  font-size: 1.75rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+/* Main Container - Two Column Layout */
+.main-container {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Chat Panel - Takes remaining space (approx 75%) */
+.chat-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+}
+
+/* Error Banner */
+.error-banner {
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+  color: var(--error);
+  padding: 1rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  border-bottom: 2px solid var(--error);
+  font-size: 0.9rem;
+  animation: slideDown 0.3s ease-out;
+}
+
+.error-icon {
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.error-message {
+  flex: 1;
+  line-height: 1.4;
+}
+
+.error-banner .close-btn {
+  background: none;
+  border: none;
+  color: var(--error);
+  font-size: 1.25rem;
+  cursor: pointer;
+  padding: 0;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.error-banner .close-btn:hover {
+  background-color: rgba(239, 68, 68, 0.15);
+  transform: scale(1.1);
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Tablet Layout (768px - 1024px) */
+@media (max-width: 1024px) {
+  .app {
+    max-width: 100%;
+  }
+
+  .app-header {
+    padding: 1.25rem 1.5rem;
+  }
+
+  .app-header h1 {
+    font-size: 1.5rem;
+  }
+}
+
+/* Mobile Layout (<768px) */
+@media (max-width: 768px) {
+  /* Stack conversation list on top of chat */
+  .main-container {
+    flex-direction: column;
+  }
+
+  /* Ensure chat panel takes remaining space */
+  .chat-panel {
+    flex: 1;
+    min-height: 0;
+  }
+
+  /* Header adjustments */
+  .app-header {
+    padding: 1rem 1.5rem;
+  }
+
+  .app-header h1 {
+    font-size: 1.25rem;
+  }
+
+  /* Error and loading banners */
+  .error-banner,
+  .loading-banner {
+    padding: 0.75rem 1rem;
+    font-size: 0.85rem;
+  }
+}
+
+/* Small mobile devices (<480px) */
+@media (max-width: 480px) {
+  .app-header {
+    padding: 0.875rem 1rem;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .app-header h1 {
+    font-size: 1.125rem;
+    flex: 1 0 100%;
+  }
+
+  .error-banner,
+  .loading-banner {
+    padding: 0.625rem 0.875rem;
+    font-size: 0.8rem;
+  }
+}
+
+/* Global Transitions */
+* {
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+button {
+  transition: all 0.2s ease;
+}
+
+/* Utility Classes */
+.text-center {
   text-align: center;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+.mt-1 {
+  margin-top: 0.5rem;
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.mt-2 {
+  margin-top: 1rem;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
+.mb-1 {
+  margin-bottom: 0.5rem;
 }
 
-.card {
-  padding: 2em;
+.mb-2 {
+  margin-bottom: 1rem;
 }
 
-.read-the-docs {
-  color: #888;
+.p-1 {
+  padding: 0.5rem;
+}
+
+.p-2 {
+  padding: 1rem;
 }
