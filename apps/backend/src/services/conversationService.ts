@@ -49,7 +49,7 @@ export async function saveMessage(
       conversationId: conversationId,
       role: role,
       content: content,
-      agentType: agentType
+      agentType: agentType ?? null
     }
   });
 
