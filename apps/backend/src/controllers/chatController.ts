@@ -26,7 +26,7 @@ chat.post('/messages', async (c) => {
 
   // Get previous agent type from conversation history
   const previousAgentType = conversationHistory.length > 0
-    ? conversationHistory[conversationHistory.length - 1]?.agentType
+    ? conversationHistory[conversationHistory.length - 1]?.agentType ?? undefined
     : undefined;
 
   // Call router to determine which agent to use
