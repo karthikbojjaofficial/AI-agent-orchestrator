@@ -9,6 +9,18 @@ import { saveMessage } from './conversationService.js';
 // Setup AI client
 const model = openai('gpt-4o-mini');
 
+// Helper function to format conversation history
+function formatConversationHistory(conversationHistory: any[]): string {
+  if (conversationHistory.length === 0) return '';
+
+  const formatted = conversationHistory.map(msg => {
+    const role = msg.role === 'user' ? 'User' : 'Assistant';
+    return `${role}: ${msg.content}`;
+  }).join('\n');
+
+  return `Previous conversation:\n${formatted}\n\nCurrent message:\n`;
+}
+
 // System prompt for Support Agent
 const SUPPORT_AGENT_PROMPT = `You are a friendly and helpful customer support agent.
 
@@ -85,10 +97,13 @@ If the request is unclear or outside these areas, politely ask them to clarify o
 Always keep responses brief and redirect back to our capabilities.`;
 
 export async function callSupportAgent(message: string, userId: string, conversationHistory: any[], conversationId: string) {
+  const historyContext = formatConversationHistory(conversationHistory);
+  const fullPrompt = historyContext + message;
+
   const result = streamText({
     model: model,
     system: `${SUPPORT_AGENT_PROMPT}\n\nYou are currently assisting user: ${userId}`,
-    prompt: message,
+    prompt: fullPrompt,
     tools: {
       queryConversationHistory: tool({
         description: 'Get past conversation history for a user. Use this when the user asks about previous conversations or mentions something from the past.',
@@ -111,10 +126,13 @@ export async function callSupportAgent(message: string, userId: string, conversa
 }
 
 export async function callOrderAgent(message: string, userId: string, conversationHistory: any[], conversationId: string) {
+  const historyContext = formatConversationHistory(conversationHistory);
+  const fullPrompt = historyContext + message;
+
   const result = streamText({
     model: model,
     system: `${ORDER_AGENT_PROMPT}\n\nYou are currently assisting user: ${userId}`,
-    prompt: message,
+    prompt: fullPrompt,
     tools: {
       getOrderDetails: tool({
         description: 'Get detailed information about a specific order. Use this when the customer asks about their order.',
@@ -159,10 +177,13 @@ export async function callOrderAgent(message: string, userId: string, conversati
 }
 
 export async function callBillingAgent(message: string, userId: string, conversationHistory: any[], conversationId: string) {
+  const historyContext = formatConversationHistory(conversationHistory);
+  const fullPrompt = historyContext + message;
+
   const result = streamText({
     model: model,
     system: `${BILLING_AGENT_PROMPT}\n\nYou are currently assisting user: ${userId}`,
-    prompt: message,
+    prompt: fullPrompt,
     tools: {
       getInvoiceDetails: tool({
         description: 'Get detailed information about an invoice. Use this when the customer asks about their invoice or payment.',
@@ -195,11 +216,18 @@ export async function callBillingAgent(message: string, userId: string, conversa
   return result;
 }
 
-export async function callRouterAgent(message: string, userId: string, conversationHistory: any[]) {
+export async function callRouterAgent(message: string, userId: string, conversationHistory: any[], previousAgentType?: string) {
+  const systemPrompt = previousAgentType
+    ? `${ROUTER_AGENT_PROMPT}\n\nIMPORTANT: The previous message was handled by the ${previousAgentType} agent. Maintain continuity with the same agent for follow-up responses (like "thanks", "ok", "got it") or related questions. Only switch agents if the customer clearly changes topic to a different domain.`
+    : ROUTER_AGENT_PROMPT;
+
+  const historyContext = formatConversationHistory(conversationHistory);
+  const fullPrompt = historyContext + message;
+
   const result = await generateObject({
     model: model,
-    system: ROUTER_AGENT_PROMPT,
-    prompt: message,
+    system: systemPrompt,
+    prompt: fullPrompt,
     schema: z.object({
       agentType: z.enum(['support', 'order', 'billing']).describe('The type of agent to route to'),
       confidence: z.number().min(0).max(1).describe('Confidence level between 0 and 1 for this classification'),
@@ -211,10 +239,13 @@ export async function callRouterAgent(message: string, userId: string, conversat
 }
 
 export async function callFallbackAgent(message: string, userId: string, conversationHistory: any[], conversationId: string) {
+  const historyContext = formatConversationHistory(conversationHistory);
+  const fullPrompt = historyContext + message;
+
   const result = streamText({
     model: model,
     system: `${FALLBACK_AGENT_PROMPT}\n\nYou are currently assisting user: ${userId}`,
-    prompt: message,
+    prompt: fullPrompt,
     toolChoice: 'none',
     stopWhen: stepCountIs(5),
     onFinish: async ({ text }) => {

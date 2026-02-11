@@ -45,7 +45,7 @@ app.post('/test-billing-agent', async (c) => {
 // Test router agent endpoint
 app.post('/test-router-agent', async (c) => {
   const { message, userId } = await c.req.json();
-  const result = await callRouterAgent(message, userId || 'user_1', []);
+  const result = await callRouterAgent(message, userId || 'user_1', [], undefined);
   return c.json(result);
 });
 

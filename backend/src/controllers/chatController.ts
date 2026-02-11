@@ -23,18 +23,31 @@ chat.post('/messages', async (c) => {
   // Save user message
   await saveMessage(convId, 'user', message);
 
+  // Get previous agent type from conversation history
+  const previousAgentType = conversationHistory.length > 0
+    ? conversationHistory[conversationHistory.length - 1]?.agentType
+    : undefined;
+
   // Call router to determine which agent to use
-  const routerResult = await callRouterAgent(message, userId, conversationHistory);
+  const routerResult = await callRouterAgent(message, userId, conversationHistory, previousAgentType);
   const { agentType, confidence } = routerResult;
 
-  // Set confidence threshold
-  const CONFIDENCE_THRESHOLD = 0.7;
+  // Set confidence threshold (higher threshold when maintaining continuity)
+  const CONFIDENCE_THRESHOLD = previousAgentType ? 0.85 : 0.7;
 
   // Call appropriate agent based on confidence and router decision
   let streamResult;
   if (confidence < CONFIDENCE_THRESHOLD) {
-    // Low confidence - use fallback agent
-    streamResult = await callFallbackAgent(message, userId, conversationHistory, convId);
+    // Low confidence - use fallback agent or maintain previous agent
+    if (previousAgentType === 'order') {
+      streamResult = await callOrderAgent(message, userId, conversationHistory, convId);
+    } else if (previousAgentType === 'billing') {
+      streamResult = await callBillingAgent(message, userId, conversationHistory, convId);
+    } else if (previousAgentType === 'support') {
+      streamResult = await callSupportAgent(message, userId, conversationHistory, convId);
+    } else {
+      streamResult = await callFallbackAgent(message, userId, conversationHistory, convId);
+    }
   } else if (agentType === 'order') {
     streamResult = await callOrderAgent(message, userId, conversationHistory, convId);
   } else if (agentType === 'billing') {
