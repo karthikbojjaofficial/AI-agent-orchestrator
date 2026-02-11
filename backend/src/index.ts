@@ -5,6 +5,7 @@ import { serve } from '@hono/node-server';
 import { callSupportAgent, callOrderAgent, callBillingAgent, callRouterAgent } from './services/agentService.js';
 import { extractUserId } from './middleware/userMiddleware.js';
 import { validateUser } from './middleware/validateUser.js';
+import { rateLimitMiddleware } from './middleware/rateLimitMiddleware.js';
 import chat from './controllers/chatController.js';
 
 const app = new Hono();
@@ -14,6 +15,7 @@ app.use('*', cors());
 
 // API routes with user middleware
 app.use('/api/*', extractUserId, validateUser);
+app.use('/api/chat/*', rateLimitMiddleware);
 app.route('/api/chat', chat);
 
 // Health check endpoint
