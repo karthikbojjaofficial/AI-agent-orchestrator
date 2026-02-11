@@ -1,6 +1,7 @@
 import { openai } from '@ai-sdk/openai';
-import { streamText, generateObject, tool, stepCountIs } from 'ai';
+import { streamText, generateObject, generateText, tool, stepCountIs } from 'ai';
 import { z } from 'zod';
+import { encoding_for_model } from 'tiktoken';
 import { queryConversationHistory } from '../tools/conversationTools.js';
 import { getOrderDetails, getDeliveryStatus, modifyOrder } from '../tools/orderTools.js';
 import { getInvoiceDetails, checkRefundStatus } from '../tools/billingTools.js';
@@ -9,16 +10,60 @@ import { saveMessage } from './conversationService.js';
 // Setup AI client
 const model = openai('gpt-4o-mini');
 
-// Helper function to format conversation history
-function formatConversationHistory(conversationHistory: any[]): string {
-  if (conversationHistory.length === 0) return '';
+// Token counting
+const tokenEncoder = encoding_for_model('gpt-4o-mini');
+const SOFT_TOKEN_LIMIT = 1000;
 
-  const formatted = conversationHistory.map(msg => {
+function countTokens(text: string): number {
+  const tokens = tokenEncoder.encode(text);
+  return tokens.length;
+}
+
+// Summarize old messages
+async function summarizeMessages(messages: any[]): Promise<string> {
+  const formatted = messages.map(msg => {
     const role = msg.role === 'user' ? 'User' : 'Assistant';
     return `${role}: ${msg.content}`;
   }).join('\n');
 
-  return `Previous conversation:\n${formatted}\n\nCurrent message:\n`;
+  const result = await generateText({
+    model: model,
+    prompt: `Summarize this conversation into a brief paragraph (max 100 words) capturing the key points:\n\n${formatted}`
+  });
+
+  return result.text;
+}
+
+// Helper function to format conversation history with smart compression
+async function formatConversationHistory(conversationHistory: any[]): Promise<string> {
+  if (conversationHistory.length === 0) return '';
+
+  // Count tokens in full history
+  const fullHistory = conversationHistory.map(msg => {
+    const role = msg.role === 'user' ? 'User' : 'Assistant';
+    return `${role}: ${msg.content}`;
+  }).join('\n');
+
+  const totalTokens = countTokens(fullHistory);
+
+  // If under limit, send all
+  if (totalTokens <= SOFT_TOKEN_LIMIT) {
+    return `Previous conversation:\n${fullHistory}\n\nCurrent message:\n`;
+  }
+
+  // Over limit: summarize old, keep last 5 verbatim
+  const recentCount = 5;
+  const oldMessages = conversationHistory.slice(0, -recentCount);
+  const recentMessages = conversationHistory.slice(-recentCount);
+
+  const summary = await summarizeMessages(oldMessages);
+
+  const recentFormatted = recentMessages.map(msg => {
+    const role = msg.role === 'user' ? 'User' : 'Assistant';
+    return `${role}: ${msg.content}`;
+  }).join('\n');
+
+  return `Previous conversation summary:\n${summary}\n\nRecent messages:\n${recentFormatted}\n\nCurrent message:\n`;
 }
 
 // System prompt for Support Agent
@@ -97,7 +142,7 @@ If the request is unclear or outside these areas, politely ask them to clarify o
 Always keep responses brief and redirect back to our capabilities.`;
 
 export async function callSupportAgent(message: string, userId: string, conversationHistory: any[], conversationId: string) {
-  const historyContext = formatConversationHistory(conversationHistory);
+  const historyContext = await formatConversationHistory(conversationHistory);
   const fullPrompt = historyContext + message;
 
   const result = streamText({
@@ -126,7 +171,7 @@ export async function callSupportAgent(message: string, userId: string, conversa
 }
 
 export async function callOrderAgent(message: string, userId: string, conversationHistory: any[], conversationId: string) {
-  const historyContext = formatConversationHistory(conversationHistory);
+  const historyContext = await formatConversationHistory(conversationHistory);
   const fullPrompt = historyContext + message;
 
   const result = streamText({
@@ -177,7 +222,7 @@ export async function callOrderAgent(message: string, userId: string, conversati
 }
 
 export async function callBillingAgent(message: string, userId: string, conversationHistory: any[], conversationId: string) {
-  const historyContext = formatConversationHistory(conversationHistory);
+  const historyContext = await formatConversationHistory(conversationHistory);
   const fullPrompt = historyContext + message;
 
   const result = streamText({
@@ -221,7 +266,7 @@ export async function callRouterAgent(message: string, userId: string, conversat
     ? `${ROUTER_AGENT_PROMPT}\n\nIMPORTANT: The previous message was handled by the ${previousAgentType} agent. Maintain continuity with the same agent for follow-up responses (like "thanks", "ok", "got it") or related questions. Only switch agents if the customer clearly changes topic to a different domain.`
     : ROUTER_AGENT_PROMPT;
 
-  const historyContext = formatConversationHistory(conversationHistory);
+  const historyContext = await formatConversationHistory(conversationHistory);
   const fullPrompt = historyContext + message;
 
   const result = await generateObject({
@@ -239,7 +284,7 @@ export async function callRouterAgent(message: string, userId: string, conversat
 }
 
 export async function callFallbackAgent(message: string, userId: string, conversationHistory: any[], conversationId: string) {
-  const historyContext = formatConversationHistory(conversationHistory);
+  const historyContext = await formatConversationHistory(conversationHistory);
   const fullPrompt = historyContext + message;
 
   const result = streamText({
