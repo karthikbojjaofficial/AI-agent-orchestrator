@@ -10,7 +10,7 @@
     "module": "nodenext",
     "target": "esnext",
     "lib": ["esnext"],
-    "types": ["node"]
+    "types": ["node"],
 
     // Other Outputs
     "sourceMap": true,
@@ -35,6 +35,8 @@
     "isolatedModules": true,
     "noUncheckedSideEffectImports": true,
     "moduleDetection": "force",
-    "skipLibCheck": true,
-  }
+    "skipLibCheck": true
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist", "**/*.test.ts", "**/*.spec.ts", "prisma", "test-*.ts", "vitest.config.ts", "prisma.config.ts"]
 }
