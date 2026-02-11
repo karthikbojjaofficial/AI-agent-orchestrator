@@ -1,3 +1,4 @@
+import ReactMarkdown from 'react-markdown'
 import TypingIndicator from './TypingIndicator'
 import './Message.css'
 
@@ -21,7 +22,7 @@ function Message({ role, content, agentType, isStreaming = false }: MessageProps
   return (
     <div className={`message ${role}`}>
       <div className="message-content">
-        {content}
+        <ReactMarkdown>{content}</ReactMarkdown>
       </div>
     </div>
   )

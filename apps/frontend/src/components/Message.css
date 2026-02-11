@@ -20,6 +20,41 @@
   position: relative;
 }
 
+/* Markdown styling */
+.message-content p {
+  margin: 0 0 0.5rem 0;
+}
+
+.message-content p:last-child {
+  margin-bottom: 0;
+}
+
+.message-content ul,
+.message-content ol {
+  margin: 0.5rem 0;
+  padding-left: 1.5rem;
+}
+
+.message-content li {
+  margin: 0.25rem 0;
+}
+
+.message-content strong {
+  font-weight: 600;
+}
+
+.message-content code {
+  background-color: rgba(0, 0, 0, 0.1);
+  padding: 0.125rem 0.25rem;
+  border-radius: 3px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.9em;
+}
+
+.message.user .message-content code {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
 .message.user .message-content {
   background-color: var(--user-message-bg);
   color: var(--user-message-text);
