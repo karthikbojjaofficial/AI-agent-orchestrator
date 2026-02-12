@@ -202,6 +202,12 @@ function App() {
         throw new Error(`HTTP error! status: ${response.status}`)
       }
 
+      // Get conversationId from header if this was a new conversation
+      const conversationIdFromHeader = response.headers.get('X-Conversation-Id')
+      if (conversationIdFromHeader && !currentConversationId) {
+        setCurrentConversationId(conversationIdFromHeader)
+      }
+
       // Handle streaming response
       const reader = response.body?.getReader()
       const decoder = new TextDecoder()

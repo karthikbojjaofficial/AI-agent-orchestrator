@@ -57,7 +57,8 @@ chat.post('/messages', async (c) => {
     streamResult = await callSupportAgent(message, userId, conversationHistory, convId);
   }
 
-  // Return streaming response
+  // Return streaming response with conversationId header
+  c.header('X-Conversation-Id', convId);
   return streamResult.toTextStreamResponse();
 });
 
